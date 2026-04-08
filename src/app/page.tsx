@@ -113,7 +113,7 @@ export default function Home() {
         {/* Header Section */}
         <div className="text-center space-y-2">
           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
-            Air Canvas
+            Air Drawing
           </h1>
           <p className="text-slate-400 max-w-2xl mx-auto font-medium">
             Draw in thin air using hand gestures. Powered by Next.js, MediaPipe, and Tailwind CSS.
