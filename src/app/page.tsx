@@ -1,65 +1,158 @@
-import Image from "next/image";
+"use client";
+
+import React, { useRef, useState, useCallback, useEffect } from "react";
+import { CameraFeed } from "@/components/CameraFeed";
+import { DrawingCanvas, DrawingCanvasRef } from "@/components/DrawingCanvas";
+import { HandTracker } from "@/components/HandTracker";
+import { ControlsOverlay } from "@/components/ControlsOverlay";
+import { Gesture, Landmark } from "@/utils/gestureDetection";
+
+const COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#1e293b", "#a855f7"];
+const SIZES = [2, 5, 10, 15, 20];
+const ACTION_DEBOUNCE_MS = 800;
 
 export default function Home() {
+  const [isCameraActive, setIsCameraActive] = useState(true);
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+  
+  const canvasRef = useRef<DrawingCanvasRef>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const [dimensions, setDimensions] = useState({ width: 1280, height: 720 });
+  const [currentGesture, setCurrentGesture] = useState<Gesture>("None");
+  
+  const [colorIndex, setColorIndex] = useState(0);
+  const [sizeIndex, setSizeIndex] = useState(2); // 10px default
+  
+  const lastActionTime = useRef<number>(0);
+
+  // Measure container for canvas scaling
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: containerRef.current.clientHeight
+        });
+      }
+    };
+    
+    window.addEventListener("resize", updateDimensions);
+    updateDimensions();
+    
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
+  const handleGesture = useCallback((gesture: Gesture, indexTip: Landmark | null) => {
+    setCurrentGesture(gesture);
+    const now = performance.now();
+
+    switch (gesture) {
+      case "Index":
+        if (indexTip) {
+          canvasRef.current?.drawPoint(
+            indexTip.x, 
+            indexTip.y, 
+            COLORS[colorIndex], 
+            SIZES[sizeIndex]
+          );
+        }
+        break;
+      case "OpenPalm":
+        if (now - lastActionTime.current > ACTION_DEBOUNCE_MS) {
+          canvasRef.current?.clearCanvas();
+          lastActionTime.current = now;
+        }
+        break;
+      case "Fist":
+        canvasRef.current?.stopDrawing();
+        break;
+      case "TwoFingers":
+        canvasRef.current?.stopDrawing();
+        if (now - lastActionTime.current > ACTION_DEBOUNCE_MS) {
+          setColorIndex((prev) => (prev + 1) % COLORS.length);
+          lastActionTime.current = now;
+        }
+        break;
+      case "ThreeFingers":
+        canvasRef.current?.stopDrawing();
+        if (now - lastActionTime.current > ACTION_DEBOUNCE_MS) {
+          setSizeIndex((prev) => (prev + 1) % SIZES.length);
+          lastActionTime.current = now;
+        }
+        break;
+      case "None":
+      default:
+        canvasRef.current?.stopDrawing();
+        break;
+    }
+  }, [colorIndex, sizeIndex]);
+
+  const toggleCamera = () => {
+    setIsCameraActive(!isCameraActive);
+    if (isCameraActive) {
+      canvasRef.current?.stopDrawing();
+      setCurrentGesture("None");
+    }
+  };
+
+  const downloadImage = () => {
+    const dataUrl = canvasRef.current?.getCanvasImage();
+    if (dataUrl) {
+      const link = document.createElement("a");
+      link.download = "hand-drawing.png";
+      link.href = dataUrl;
+      link.click();
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-8 font-sans">
+      <div className="w-full max-w-7xl mx-auto space-y-4">
+        
+        {/* Header Section */}
+        <div className="text-center space-y-2">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">
+            Air Canvas
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-slate-400 max-w-2xl mx-auto font-medium">
+            Draw in thin air using hand gestures. Powered by Next.js, MediaPipe, and Tailwind CSS.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Main Interface */}
+        <div 
+          ref={containerRef}
+          className="relative w-full aspect-video max-h-[75vh] bg-black rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10"
+        >
+          <CameraFeed 
+            isActive={isCameraActive} 
+            onVideoReady={setVideoElement} 
+          />
+          
+          <DrawingCanvas 
+            ref={canvasRef}
+            width={dimensions.width}
+            height={dimensions.height}
+          />
+          
+          <HandTracker 
+            isActive={isCameraActive} 
+            videoElement={videoElement} 
+            onGesture={handleGesture} 
+          />
+          
+          <ControlsOverlay 
+            currentColor={COLORS[colorIndex]}
+            currentSize={SIZES[sizeIndex]}
+            currentGesture={currentGesture}
+            isCameraActive={isCameraActive}
+            toggleCamera={toggleCamera}
+            downloadImage={downloadImage}
+            availableColors={COLORS}
+          />
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
