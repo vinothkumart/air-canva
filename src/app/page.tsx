@@ -107,7 +107,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 sm:p-8 font-sans">
+    <main className="min-h-screen bg-slate-950 flex flex-col items-center justify-center font-sans">
       <div className="w-full max-w-7xl mx-auto space-y-4">
         
         {/* Header Section */}
@@ -151,6 +151,30 @@ export default function Home() {
             downloadImage={downloadImage}
             availableColors={COLORS}
           />
+        </div>
+
+        {/* Gesture Guide */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-4 text-sm">
+          <div className="bg-slate-900 border border-slate-800/60 shadow-lg rounded-xl p-3 flex items-center space-x-3 transition-transform hover:scale-105">
+            <span className="text-2xl drop-shadow-md">✋</span>
+            <span className="text-slate-300 font-medium">Clear Canvas</span>
+          </div>
+          <div className="bg-slate-900 border border-slate-800/60 shadow-lg rounded-xl p-3 flex items-center space-x-3 transition-transform hover:scale-105">
+            <span className="text-2xl drop-shadow-md">☝️</span>
+            <span className="text-slate-300 font-medium">Draw</span>
+          </div>
+          <div className="bg-slate-900 border border-slate-800/60 shadow-lg rounded-xl p-3 flex items-center space-x-3 transition-transform hover:scale-105">
+            <span className="text-2xl drop-shadow-md">✌️</span>
+            <span className="text-slate-300 font-medium">Change Color</span>
+          </div>
+          <div className="bg-slate-900 border border-slate-800/60 shadow-lg rounded-xl p-3 flex items-center space-x-3 transition-transform hover:scale-105">
+            <span className="text-2xl drop-shadow-md">🤟</span>
+            <span className="text-slate-300 font-medium">Brush Size</span>
+          </div>
+          <div className="bg-slate-900 border border-slate-800/60 shadow-lg rounded-xl p-3 flex items-center space-x-3 md:col-span-1 col-span-2 justify-center md:justify-start transition-transform hover:scale-105">
+            <span className="text-2xl drop-shadow-md">✊</span>
+            <span className="text-slate-300 font-medium">Pause</span>
+          </div>
         </div>
       </div>
     </main>
